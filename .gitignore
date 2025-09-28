@@ -1,2 +1,14 @@
-processed_products/
-logs/
+# Dependencies
+/vendor/
+
+# Logs
+/logs/
+
+# Processed files
+/processed_products/
+
+# Configuration
+/config/products.sqlite
+
+# Environment
+.env
