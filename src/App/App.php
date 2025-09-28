@@ -7,6 +7,7 @@ use App\Controllers\ApiController;
 use App\Middleware\ApiKeyMiddleware;
 
 use App\Services\ImageProxy;
+use App\Services\ProductService;
 use Slim\Routing\RouteCollectorProxy;
 
 class App
@@ -24,6 +25,12 @@ class App
 
         // Dependency Injection
         $container = $app->getContainer();
+        $container[ProductService::class] = function () {
+            return new ProductService();
+        };
+        $container[ApiController::class] = function ($container) {
+            return new ApiController($container->get(ProductService::class));
+        };
         $container[ImageProxy::class] = function () use ($config) {
             return new ImageProxy($config);
         };

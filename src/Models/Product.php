@@ -4,6 +4,13 @@ namespace App\Models;
 
 class Product
 {
+    public const ALLOWED_PRODUCT_FIELDS = [
+        'id', 'name', 'handle', 'body_html', 'price', 'compare_at_price', 
+        'category', 'in_stock', 'rating', 'review_count', 'tags', 'vendor', 
+        'bestseller_score', // New calculated score
+        'raw_json'
+    ];
+
     public int $id;
     public string $name;
     public string $handle;
