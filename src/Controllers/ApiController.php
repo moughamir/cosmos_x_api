@@ -8,44 +8,18 @@ use Psr\Http\Message\ResponseInterface as Response;
 use App\Models\MsgPackResponse;
 use App\Database\Database;
 use App\Models\Product;
-use App\Services\ProductService;
+use App\Services\ImageService;
 use PDO;
 
 class ApiController
 {
     private ProductService $productService;
+    private ImageService $imageService;
 
-    public function __construct(ProductService $productService)
+    public function __construct(ProductService $productService, ImageService $imageService)
     {
         $this->productService = $productService;
-    }
-
-
-
-    /**
-     * Fetches images for a single product ID.
-     * @param int $productId
-     * @return array
-     */
-    private function getProductImages(int $productId): array
-    {
-        $db = Database::getInstance();
-        // Select all required fields from the product_images table
-        $sql = "SELECT id, product_id, position, src, width, height, created_at, updated_at 
-                FROM product_images 
-                WHERE product_id = :product_id 
-                ORDER BY position ASC";
-        
-        $stmt = $db->prepare($sql);
-        $stmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
-        $stmt->execute();
-        
-        $images = $stmt->fetchAll(PDO::FETCH_CLASS, 'App\Models\Image');
-
-        // Convert string nulls/empty strings to actual PHP nulls/proper types if necessary
-        // In this case, basic associative array is sufficient for simple fields.
-        
-        return $images;
+        $this->imageService = $imageService;
     }
 
     private function outputResponse(Response $response, array $data, string $format = 'json'): Response
@@ -82,16 +56,7 @@ class ApiController
 
         // --- NEW: Fetch All Related Images in a Single Query ---
         $productIds = array_map(fn($p) => $p->id, $products);
-        $idString = implode(',', $productIds);
-        
-        $db = Database::getInstance();
-        $sqlImages = "SELECT product_id, id, position, src, width, height 
-                      FROM product_images 
-                      WHERE product_id IN ({$idString}) 
-                      ORDER BY product_id, position ASC";
-        
-        $stmtImages = $db->query($sqlImages);
-        $allImages = $stmtImages->fetchAll(PDO::FETCH_CLASS, 'App\Models\Image');
+        $allImages = $this->imageService->getImagesForProducts($productIds);
 
         // Map images back to their respective products
         $imagesByProductId = [];
@@ -144,16 +109,7 @@ class ApiController
         if (!empty($products)) {
             // --- NEW: Fetch All Related Images in a Single Query ---
             $productIds = array_map(fn($p) => $p->id, $products);
-            $idString = implode(',', $productIds);
-            
-            $db = Database::getInstance();
-            $sqlImages = "SELECT product_id, id, position, src, width, height 
-                          FROM product_images 
-                          WHERE product_id IN ({$idString}) 
-                          ORDER BY product_id, position ASC";
-            
-            $stmtImages = $db->query($sqlImages);
-            $allImages = $stmtImages->fetchAll(PDO::FETCH_CLASS, 'App\Models\Image');
+            $allImages = $this->imageService->getImagesForProducts($productIds);
 
             // Map images back to their respective products
             $imagesByProductId = [];
@@ -186,7 +142,7 @@ class ApiController
         }
 
         // --- NEW: Attach Images, Variants, and Options ---
-        $product->images = $this->getProductImages($product->id);
+        $product->images = $this->imageService->getProductImages($product->id);
         // You would call getProductVariants() and getProductOptions() here too.
         
         $data = ['product' => $product];
@@ -208,16 +164,7 @@ class ApiController
         if (!empty($products)) {
             // --- NEW: Fetch All Related Images in a Single Query ---
             $productIds = array_map(fn($p) => $p->id, $products);
-            $idString = implode(',', $productIds);
-            
-            $db = Database::getInstance();
-            $sqlImages = "SELECT product_id, id, position, src, width, height 
-                          FROM product_images 
-                          WHERE product_id IN ({$idString}) 
-                          ORDER BY product_id, position ASC";
-            
-            $stmtImages = $db->query($sqlImages);
-            $allImages = $stmtImages->fetchAll(PDO::FETCH_CLASS, 'App\Models\Image');
+            $allImages = $this->imageService->getImagesForProducts($productIds);
 
             // Map images back to their respective products
             $imagesByProductId = [];
