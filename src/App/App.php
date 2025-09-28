@@ -24,9 +24,6 @@ class App
 
         // Dependency Injection
         $container = $app->getContainer();
-        $container[ApiController::class] = function () use ($config) {
-            return new ApiController($config['db_file']);
-        };
         $container[ImageProxy::class] = function () use ($config) {
             return new ImageProxy($config);
         };

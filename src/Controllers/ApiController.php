@@ -5,13 +5,12 @@ namespace App\Controllers;
 
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
-use App\Models\MsgPackResponse; // Assuming you have this class for MsgPack
+use App\Models\MsgPackResponse;
+use App\Database\Database;
 use PDO;
 
 class ApiController
 {
-    private PDO $db;
-    
     // Define the list of valid columns for security and the &fields= parameter
     private const ALLOWED_PRODUCT_FIELDS = [
         'id', 'name', 'handle', 'body_html', 'price', 'compare_at_price', 
@@ -20,12 +19,6 @@ class ApiController
         'raw_json'
     ];
 
-    public function __construct(string $dbFile)
-    {
-        $this->db = new PDO("sqlite:" . $dbFile);
-        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    }
-
     /**
      * Fetches images for a single product ID.
      * @param int $productId
@@ -33,13 +26,14 @@ class ApiController
      */
     private function getProductImages(int $productId): array
     {
+        $db = Database::getInstance();
         // Select all required fields from the product_images table
         $sql = "SELECT id, product_id, position, src, width, height, created_at, updated_at 
                 FROM product_images 
                 WHERE product_id = :product_id 
                 ORDER BY position ASC";
         
-        $stmt = $this->db->prepare($sql);
+        $stmt = $db->prepare($sql);
         $stmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
         $stmt->execute();
         
@@ -59,7 +53,7 @@ class ApiController
                 $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT));
                 return $response->withHeader('Content-Type', 'application/json');
             }
-            // Assumes App\Utils\MsgPackResponse exists
+            // Assumes App\Models\MsgPackResponse exists
             return MsgPackResponse::withMsgPack($response, $data); 
         } else {
             $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT));
@@ -70,17 +64,18 @@ class ApiController
     // --- 1. Get All Products (Paginated) ---
     public function getProducts(Request $request, Response $response): Response
     {
+        $db = Database::getInstance();
         $params = $request->getQueryParams();
         $page = max(1, (int) ($params['page'] ?? 1));
         $limit = min(100, max(1, (int) ($params['limit'] ?? 50)));
         $format = $params['format'] ?? 'json';
 
-        $totalStmt = $this->db->query("SELECT COUNT(*) FROM products");
+        $totalStmt = $db->query("SELECT COUNT(*) FROM products");
         $total = $totalStmt->fetchColumn();
 
         $offset = ($page - 1) * $limit;
 
-        $stmt = $this->db->prepare("SELECT * FROM products LIMIT :limit OFFSET :offset");
+        $stmt = $db->prepare("SELECT * FROM products LIMIT :limit OFFSET :offset");
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -100,7 +95,7 @@ class ApiController
                       WHERE product_id IN ({$idString}) 
                       ORDER BY product_id, position ASC";
         
-        $stmtImages = $this->db->query($sqlImages);
+        $stmtImages = $db->query($sqlImages);
         $allImages = $stmtImages->fetchAll(PDO::FETCH_ASSOC);
 
         // Map images back to their respective products
@@ -132,6 +127,7 @@ class ApiController
     // --- 2. Search Products (FTS) ---
     public function searchProducts(Request $request, Response $response): Response
     {
+        $db = Database::getInstance();
         $params = $request->getQueryParams();
         $query = $params['q'] ?? '';
         $fieldsParam = $params['fields'] ?? '';
@@ -159,7 +155,7 @@ class ApiController
                     WHERE products_fts MATCH :query
                 )";
 
-        $stmt = $this->db->prepare($sql);
+        $stmt = $db->prepare($sql);
         $stmt->bindValue(':query', $query);
         $stmt->execute();
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -174,7 +170,7 @@ class ApiController
                           WHERE product_id IN ({$idString}) 
                           ORDER BY product_id, position ASC";
             
-            $stmtImages = $this->db->query($sqlImages);
+            $stmtImages = $db->query($sqlImages);
             $allImages = $stmtImages->fetchAll(PDO::FETCH_ASSOC);
 
             // Map images back to their respective products
@@ -197,16 +193,17 @@ class ApiController
     // --- 3. Get Single Product (ID or Handle) ---
     public function getProductOrHandle(Request $request, Response $response, array $args): Response
     {
+        $db = Database::getInstance();
         $key = $args['key'];
         $params = $request->getQueryParams();
         $format = $params['format'] ?? 'json';
 
         // Determine if key is numeric ID or string Handle
         if (is_numeric($key) && ctype_digit($key)) {
-            $stmt = $this->db->prepare("SELECT * FROM products WHERE id = :key");
+            $stmt = $db->prepare("SELECT * FROM products WHERE id = :key");
             $stmt->bindValue(':key', (int)$key, PDO::PARAM_INT);
         } else {
-            $stmt = $this->db->prepare("SELECT * FROM products WHERE handle = :key");
+            $stmt = $db->prepare("SELECT * FROM products WHERE handle = :key");
             $stmt->bindValue(':key', $key, PDO::PARAM_STR);
         }
         
@@ -237,6 +234,7 @@ class ApiController
     // --- 4. Get Collection Products (/collections/{handle}) ---
     public function getCollectionProducts(Request $request, Response $response, array $args): Response
     {
+        $db = Database::getInstance();
         $collectionHandle = strtolower($args['handle']);
         $params = $request->getQueryParams();
         $fieldsParam = $params['fields'] ?? '';
@@ -306,7 +304,7 @@ class ApiController
                 OFFSET :offset";
         
         try {
-            $stmt = $this->db->prepare($sql);
+            $stmt = $db->prepare($sql);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
@@ -327,7 +325,7 @@ class ApiController
                           WHERE product_id IN ({$idString}) 
                           ORDER BY product_id, position ASC";
             
-            $stmtImages = $this->db->query($sqlImages);
+            $stmtImages = $db->query($sqlImages);
             $allImages = $stmtImages->fetchAll(PDO::FETCH_ASSOC);
 
             // Map images back to their respective products
@@ -347,7 +345,7 @@ class ApiController
         $data = ['products' => $products];
         if ($isPaginated) {
             // Only count total rows if paginated
-            $totalStmt = $this->db->query("SELECT COUNT(id) FROM products WHERE {$whereClause}");
+            $totalStmt = $db->query("SELECT COUNT(id) FROM products WHERE {$whereClause}");
             $total = $totalStmt->fetchColumn();
 
             $data['meta'] = [
