@@ -2,6 +2,8 @@
 
 This document provides a guide on how to integrate the Products API with a Next.js application, using server-side rendering (SSR) for optimal performance and SEO.
 
+For detailed information about the API endpoints, see the [API Documentation](API_DOCUMENTATION.md).
+
 ## 1. Prerequisites
 
 - A running instance of the Products API.

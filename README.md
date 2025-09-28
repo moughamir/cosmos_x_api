@@ -10,6 +10,10 @@ This project provides a simple, high-performance, read-only API for accessing pr
 - **FTS Search**: Full-text search enabled for product attributes.
 - **Easy to Deploy**: No external database dependencies required.
 
+## API Documentation
+
+For detailed information about the API endpoints, see the [API Documentation](API_DOCUMENTATION.md).
+
 ## Endpoints
 
 - `GET /products`: Retrieve a paginated list of all products.

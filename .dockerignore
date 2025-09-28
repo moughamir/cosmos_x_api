@@ -1,5 +1,11 @@
 .git
 .gitignore
+.dockerignore
 Dockerfile
-INTEGRATION.md
+docker-compose.yml
 README.md
+INTEGRATION.md
+add_htaccess.sh
+.htaccess
+logs/
+processed_products/
