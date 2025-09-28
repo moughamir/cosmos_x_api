@@ -6,9 +6,9 @@ namespace App\Controllers;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 use App\Models\MsgPackResponse;
-use App\Database\Database;
 use App\Models\Product;
 use App\Services\ImageService;
+use App\Services\ProductService;
 use PDO;
 
 class ApiController
@@ -31,7 +31,7 @@ class ApiController
                 return $response->withHeader('Content-Type', 'application/json');
             }
             // Assumes App\Models\MsgPackResponse exists
-            return MsgPackResponse::withMsgPack($response, $data); 
+            return MsgPackResponse::withMsgPack($response, $data);
         } else {
             $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT));
             return $response->withHeader('Content-Type', 'application/json');
@@ -94,7 +94,7 @@ class ApiController
         $selectFields = '*';
         if (!empty($fieldsParam)) {
             $requestedFields = array_map('trim', explode(',', $fieldsParam));
-            $validFields = array_intersect($requestedFields, self::ALLOWED_PRODUCT_FIELDS);
+            $validFields = array_intersect($requestedFields, Product::ALLOWED_PRODUCT_FIELDS);
 
             if (!empty($validFields)) {
                 if (!in_array('id', $validFields)) {
@@ -144,7 +144,7 @@ class ApiController
         // --- NEW: Attach Images, Variants, and Options ---
         $product->images = $this->imageService->getProductImages($product->id);
         // You would call getProductVariants() and getProductOptions() here too.
-        
+
         $data = ['product' => $product];
         return $this->outputResponse($response, $data, $format);
     }
@@ -183,7 +183,7 @@ class ApiController
         if ($collectionHandle !== 'featured') { // featured is not paginated
             $total = $this->productService->getTotalCollectionProducts($collectionHandle);
             $data['meta'] = [
-                'total' => (int)$total,
+                'total' => (int) $total,
                 'page' => $page,
                 'limit' => $limit,
                 'total_pages' => ceil($total / $limit)

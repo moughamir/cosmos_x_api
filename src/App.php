@@ -16,8 +16,8 @@ class App
 {
     public static function bootstrap(): \Slim\App
     {
-        $config = require __DIR__ . '/../../config/app.php';
-        $dbConfig = require __DIR__ . '/../../config/database.php';
+        $config = require __DIR__ . '/../config/app.php';
+        $dbConfig = require __DIR__ . '/../config/database.php';
 
         $app = AppFactory::create();
         $app->setBasePath('/cosmos');
