@@ -17,6 +17,7 @@ class App
     public static function bootstrap(): \Slim\App
     {
         $config = require __DIR__ . '/../../config/app.php';
+        $dbConfig = require __DIR__ . '/../../config/database.php';
 
         $app = AppFactory::create();
         $app->setBasePath('/cosmos');
@@ -28,8 +29,8 @@ class App
         // Dependency Injection
         $container = $app->getContainer();
 
-        $container[PDO::class] = function () use ($config) {
-            $dbFile = $config['db_file'];
+        $container[PDO::class] = function () use ($dbConfig) {
+            $dbFile = $dbConfig['db_file'];
             $pdo = new PDO("sqlite:" . $dbFile);
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             return $pdo;
