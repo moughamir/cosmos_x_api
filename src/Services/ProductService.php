@@ -8,12 +8,18 @@ use PDO;
 
 class ProductService
 {
+    private PDO $db;
+
+    public function __construct(PDO $db)
+    {
+        $this->db = $db;
+    }
+
     public function getProducts(int $page, int $limit): array
     {
-        $db = Database::getInstance();
         $offset = ($page - 1) * $limit;
 
-        $stmt = $db->prepare("SELECT * FROM products LIMIT :limit OFFSET :offset");
+        $stmt = $this->db->prepare("SELECT * FROM products LIMIT :limit OFFSET :offset");
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -22,14 +28,12 @@ class ProductService
 
     public function getTotalProducts(): int
     {
-        $db = Database::getInstance();
-        $totalStmt = $db->query("SELECT COUNT(*) FROM products");
+        $totalStmt = $this->db->query("SELECT COUNT(*) FROM products");
         return $totalStmt->fetchColumn();
     }
 
     public function searchProducts(string $query, string $selectFields = '*'): array
     {
-        $db = Database::getInstance();
         $sql = "SELECT {$selectFields} 
                 FROM products 
                 WHERE id IN (
@@ -38,7 +42,7 @@ class ProductService
                     WHERE products_fts MATCH :query
                 )";
 
-        $stmt = $db->prepare($sql);
+        $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':query', $query);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_CLASS, Product::class);
@@ -46,12 +50,11 @@ class ProductService
 
     public function getProductOrHandle(string $key): ?Product
     {
-        $db = Database::getInstance();
         if (is_numeric($key) && ctype_digit($key)) {
-            $stmt = $db->prepare("SELECT * FROM products WHERE id = :key");
+            $stmt = $this->db->prepare("SELECT * FROM products WHERE id = :key");
             $stmt->bindValue(':key', (int)$key, PDO::PARAM_INT);
         } else {
-            $stmt = $db->prepare("SELECT * FROM products WHERE handle = :key");
+            $stmt = $this->db->prepare("SELECT * FROM products WHERE handle = :key");
             $stmt->bindValue(':key', $key, PDO::PARAM_STR);
         }
         
@@ -63,7 +66,6 @@ class ProductService
 
     public function getCollectionProducts(string $collectionHandle, int $page, int $limit, string $fieldsParam): array
     {
-        $db = Database::getInstance();
         $whereClause = '1=1';
         $orderBy = 'id ASC';
         $isPaginated = true;
@@ -123,7 +125,7 @@ class ProductService
                 LIMIT :limit 
                 OFFSET :offset";
         
-        $stmt = $db->prepare($sql);
+        $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -132,7 +134,6 @@ class ProductService
 
     public function getTotalCollectionProducts(string $collectionHandle): int
     {
-        $db = Database::getInstance();
         $whereClause = '1=1';
         
         // --- Collection Logic ---
@@ -158,7 +159,7 @@ class ProductService
                 return 0;
         }
 
-        $totalStmt = $db->query("SELECT COUNT(*) FROM products WHERE {$whereClause}");
+        $totalStmt = $this->db->query("SELECT COUNT(*) FROM products WHERE {$whereClause}");
         return $totalStmt->fetchColumn();
     }
 }

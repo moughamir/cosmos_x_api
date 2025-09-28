@@ -9,6 +9,7 @@ use App\Middleware\ApiKeyMiddleware;
 use App\Services\ImageProxy;
 use App\Services\ProductService;
 use App\Services\ImageService;
+use PDO;
 use Slim\Routing\RouteCollectorProxy;
 
 class App
@@ -26,11 +27,19 @@ class App
 
         // Dependency Injection
         $container = $app->getContainer();
-        $container[ProductService::class] = function () {
-            return new ProductService();
+
+        $container[PDO::class] = function () use ($config) {
+            $dbFile = $config['db_file'];
+            $pdo = new PDO("sqlite:" . $dbFile);
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            return $pdo;
         };
-        $container[ImageService::class] = function () {
-            return new ImageService();
+
+        $container[ProductService::class] = function ($container) {
+            return new ProductService($container->get(PDO::class));
+        };
+        $container[ImageService::class] = function ($container) {
+            return new ImageService($container->get(PDO::class));
         };
         $container[ApiController::class] = function ($container) {
             return new ApiController($container->get(ProductService::class), $container->get(ImageService::class));
