@@ -1,6 +1,6 @@
 <?php
 // src/Utils/MsgPackResponse.php
-namespace App\Utils;
+namespace App\Models;
 
 use Psr\Http\Message\ResponseInterface as Response;
 
