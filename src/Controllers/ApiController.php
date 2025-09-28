@@ -7,6 +7,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 use App\Models\MsgPackResponse;
 use App\Database\Database;
+use App\Models\Product;
 use PDO;
 
 class ApiController
@@ -37,7 +38,7 @@ class ApiController
         $stmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
         $stmt->execute();
         
-        $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $images = $stmt->fetchAll(PDO::FETCH_CLASS, 'App\Models\Image');
 
         // Convert string nulls/empty strings to actual PHP nulls/proper types if necessary
         // In this case, basic associative array is sufficient for simple fields.
@@ -79,7 +80,7 @@ class ApiController
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
-        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $products = $stmt->fetchAll(PDO::FETCH_CLASS, 'App\Models\Product');
 
         if (empty($products)) {
             // Handle empty product list
@@ -87,7 +88,7 @@ class ApiController
         }
 
         // --- NEW: Fetch All Related Images in a Single Query ---
-        $productIds = array_column($products, 'id');
+        $productIds = array_map(fn($p) => $p->id, $products);
         $idString = implode(',', $productIds);
         
         $sqlImages = "SELECT product_id, id, position, src, width, height 
@@ -96,20 +97,18 @@ class ApiController
                       ORDER BY product_id, position ASC";
         
         $stmtImages = $db->query($sqlImages);
-        $allImages = $stmtImages->fetchAll(PDO::FETCH_ASSOC);
+        $allImages = $stmtImages->fetchAll(PDO::FETCH_CLASS, 'App\Models\Image');
 
         // Map images back to their respective products
         $imagesByProductId = [];
         foreach ($allImages as $img) {
-            $imagesByProductId[$img['product_id']][] = $img;
+            $imagesByProductId[$img->product_id][] = $img;
         }
 
         // --- Final Assembly ---
-        foreach ($products as &$product) {
-            $product['images'] = $imagesByProductId[$product['id']] ?? [];
-            // Add other fields (variants, options) here as needed
+        foreach ($products as $product) {
+            $product->images = $imagesByProductId[$product->id] ?? [];
         }
-        unset($product); // Unset reference
 
         $data = [
             'products' => $products,
@@ -158,11 +157,11 @@ class ApiController
         $stmt = $db->prepare($sql);
         $stmt->bindValue(':query', $query);
         $stmt->execute();
-        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $products = $stmt->fetchAll(PDO::FETCH_CLASS, 'App\Models\Product');
 
         if (!empty($products)) {
             // --- NEW: Fetch All Related Images in a Single Query ---
-            $productIds = array_column($products, 'id');
+            $productIds = array_map(fn($p) => $p->id, $products);
             $idString = implode(',', $productIds);
             
             $sqlImages = "SELECT product_id, id, position, src, width, height 
@@ -171,19 +170,18 @@ class ApiController
                           ORDER BY product_id, position ASC";
             
             $stmtImages = $db->query($sqlImages);
-            $allImages = $stmtImages->fetchAll(PDO::FETCH_ASSOC);
+            $allImages = $stmtImages->fetchAll(PDO::FETCH_CLASS, 'App\Models\Image');
 
             // Map images back to their respective products
             $imagesByProductId = [];
             foreach ($allImages as $img) {
-                $imagesByProductId[$img['product_id']][] = $img;
+                $imagesByProductId[$img->product_id][] = $img;
             }
 
             // --- Final Assembly ---
-            foreach ($products as &$product) {
-                $product['images'] = $imagesByProductId[$product['id']] ?? [];
+            foreach ($products as $product) {
+                $product->images = $imagesByProductId[$product->id] ?? [];
             }
-            unset($product); // Unset reference
         }
 
         $data = ['products' => $products];
@@ -215,7 +213,8 @@ class ApiController
             return $response->withHeader('Content-Type', 'application/json');
         }
 
-        $product = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt->setFetchMode(PDO::FETCH_CLASS, 'App\Models\Product');
+        $product = $stmt->fetch();
 
         if (!$product) {
             $response = $response->withStatus(404);
@@ -224,7 +223,7 @@ class ApiController
         }
 
         // --- NEW: Attach Images, Variants, and Options ---
-        $product['images'] = $this->getProductImages((int)$product['id']);
+        $product->images = $this->getProductImages($product->id);
         // You would call getProductVariants() and getProductOptions() here too.
         
         $data = ['product' => $product];
@@ -308,7 +307,7 @@ class ApiController
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
-            $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $products = $stmt->fetchAll(PDO::FETCH_CLASS, 'App\Models\Product');
         } catch (\PDOException $e) {
             $response = $response->withStatus(500);
             $response->getBody()->write(json_encode(['error' => 'Database Query Error: ' . $e->getMessage()]));
@@ -317,7 +316,7 @@ class ApiController
 
         if (!empty($products)) {
             // --- NEW: Fetch All Related Images in a Single Query ---
-            $productIds = array_column($products, 'id');
+            $productIds = array_map(fn($p) => $p->id, $products);
             $idString = implode(',', $productIds);
             
             $sqlImages = "SELECT product_id, id, position, src, width, height 
@@ -326,19 +325,18 @@ class ApiController
                           ORDER BY product_id, position ASC";
             
             $stmtImages = $db->query($sqlImages);
-            $allImages = $stmtImages->fetchAll(PDO::FETCH_ASSOC);
+            $allImages = $stmtImages->fetchAll(PDO::FETCH_CLASS, 'App\Models\Image');
 
             // Map images back to their respective products
             $imagesByProductId = [];
             foreach ($allImages as $img) {
-                $imagesByProductId[$img['product_id']][] = $img;
+                $imagesByProductId[$img->product_id][] = $img;
             }
 
             // --- Final Assembly ---
-            foreach ($products as &$product) {
-                $product['images'] = $imagesByProductId[$product['id']] ?? [];
+            foreach ($products as $product) {
+                $product->images = $imagesByProductId[$product->id] ?? [];
             }
-            unset($product); // Unset reference
         }
 
         // --- Handle Metadata ---
