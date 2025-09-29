@@ -1,14 +1,15 @@
 <?php
-// src/Services/ImageProxy.php
+
 namespace App\Services;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 
-class ImageProxy {
+class ImageProxy
+{
     private string $cacheDir;
     private int $cacheHours = 24;
-    private int $maxFileSize = 10 * 1024 * 1024; // 10MB
+    private int $maxFileSize = 10 * 1024 * 1024;
     private Client $httpClient;
     private array $allowedDomains = [
         'cdn.shopify.com',
@@ -16,7 +17,8 @@ class ImageProxy {
         'cdn.moritotabi.com'
     ];
 
-    public function __construct(array $config) {
+    public function __construct(array $config)
+    {
         $this->cacheDir = $config['image_cache_dir'];
         $this->httpClient = new Client();
         if (!is_dir($this->cacheDir)) {
@@ -24,7 +26,8 @@ class ImageProxy {
         }
     }
 
-    public function output($url): void {
+    public function output($url): void
+    {
         if (!$url) {
             http_response_code(400);
             echo "Missing url";
@@ -49,13 +52,15 @@ class ImageProxy {
         $this->fetchAndCacheImage($url, $cacheFile);
     }
 
-    private function serveCachedImage(string $cacheFile): void {
+    private function serveCachedImage(string $cacheFile): void
+    {
         $mime = mime_content_type($cacheFile);
         header("Content-Type: $mime");
         readfile($cacheFile);
     }
 
-    private function fetchAndCacheImage(string $url, string $cacheFile): void {
+    private function fetchAndCacheImage(string $url, string $cacheFile): void
+    {
         try {
             $response = $this->httpClient->get($url, [
                 'verify' => false,
@@ -64,7 +69,7 @@ class ImageProxy {
                 'on_headers' => function (\GuzzleHttp\Psr7\Response $response) {
                     $contentType = $response->getHeaderLine('Content-Type');
                     $contentLength = $response->getHeaderLine('Content-Length');
-                    
+
                     if ($contentLength > $this->maxFileSize) {
                         throw new \Exception("File too large.");
                     }

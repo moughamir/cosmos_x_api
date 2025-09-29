@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Database\Database;
 use App\Models\Product;
 use PDO;
 
@@ -52,12 +51,12 @@ class ProductService
     {
         if (is_numeric($key) && ctype_digit($key)) {
             $stmt = $this->db->prepare("SELECT * FROM products WHERE id = :key");
-            $stmt->bindValue(':key', (int)$key, PDO::PARAM_INT);
+            $stmt->bindValue(':key', (int) $key, PDO::PARAM_INT);
         } else {
             $stmt = $this->db->prepare("SELECT * FROM products WHERE handle = :key");
             $stmt->bindValue(':key', $key, PDO::PARAM_STR);
         }
-        
+
         $stmt->execute();
         $stmt->setFetchMode(PDO::FETCH_CLASS, Product::class);
         $product = $stmt->fetch();
@@ -69,15 +68,14 @@ class ProductService
         $whereClause = '1=1';
         $orderBy = 'id ASC';
         $isPaginated = true;
-        
-        // --- Collection Logic ---
+
         switch ($collectionHandle) {
             case 'all':
                 break;
             case 'featured':
                 $whereClause = "tags LIKE '%featured%'";
                 $orderBy = 'RANDOM()';
-                $limit = 8; // Featured list is small and non-paginated
+                $limit = 8;
                 $isPaginated = false;
                 break;
             case 'sale':
@@ -89,19 +87,18 @@ class ProductService
                 $orderBy = 'id DESC';
                 break;
             case 'bestsellers':
-                // Uses the pre-calculated weighted score
+
                 $whereClause = '1=1';
                 $orderBy = 'bestseller_score DESC, id DESC';
                 break;
             case 'trending':
                 $whereClause = '1=1';
-                $orderBy = 'price DESC, id DESC'; // Heuristic
+                $orderBy = 'price DESC, id DESC';
                 break;
             default:
                 return [];
         }
-        
-        // --- Fields Selection Logic ---
+
         $selectFields = '*';
         if (!empty($fieldsParam)) {
             $requestedFields = array_map('trim', explode(',', $fieldsParam));
@@ -114,17 +111,16 @@ class ProductService
                 $selectFields = implode(', ', $validFields);
             }
         }
-        
-        // --- Build and Execute Query ---
+
         $offset = $isPaginated ? ($page - 1) * $limit : 0;
-        
+
         $sql = "SELECT {$selectFields} 
                 FROM products 
                 WHERE {$whereClause} 
                 ORDER BY {$orderBy} 
                 LIMIT :limit 
                 OFFSET :offset";
-        
+
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
@@ -135,8 +131,7 @@ class ProductService
     public function getTotalCollectionProducts(string $collectionHandle): int
     {
         $whereClause = '1=1';
-        
-        // --- Collection Logic ---
+
         switch ($collectionHandle) {
             case 'all':
                 break;

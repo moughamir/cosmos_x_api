@@ -8,7 +8,8 @@
         "nyholm/psr7-server": "^1.1",
         "guzzlehttp/guzzle": "^7.10",
         "ext-pdo_sqlite": "*",
-        "salsify/json-streaming-parser": "^8.3"
+        "salsify/json-streaming-parser": "^8.3",
+        "php-di/php-di": "^7.1"
     },
     "autoload": {
         "psr-4": {

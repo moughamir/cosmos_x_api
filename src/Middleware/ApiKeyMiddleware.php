@@ -1,12 +1,11 @@
 <?php
-// src/Middleware/ApiKeyMiddleware.php
 
 namespace App\Middleware;
 
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Psr\Http\Message\ResponseInterface as Response;
-use Slim\Psr7\Response as SlimResponse;
+use Nyholm\Psr7\Response as SlimResponse;
 
 class ApiKeyMiddleware
 {
@@ -19,7 +18,6 @@ class ApiKeyMiddleware
 
     public function __invoke(Request $request, RequestHandler $handler): Response
     {
-        // Check for API Key in the X-API-KEY header
         $headerApiKey = $request->getHeaderLine('X-API-KEY');
 
         if (empty($headerApiKey) || $headerApiKey !== $this->apiKey) {

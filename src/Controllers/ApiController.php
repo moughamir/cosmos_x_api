@@ -1,6 +1,4 @@
 <?php
-// src/Controllers/ApiController.php
-
 namespace App\Controllers;
 
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -25,12 +23,6 @@ class ApiController
     private function outputResponse(Response $response, array $data, string $format = 'json'): Response
     {
         if ($format === 'msgpack') {
-            if (!extension_loaded('msgpack')) {
-                // Fallback to JSON if extension is missing
-                $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT));
-                return $response->withHeader('Content-Type', 'application/json');
-            }
-            // Assumes App\Models\MsgPackResponse exists
             return MsgPackResponse::withMsgPack($response, $data);
         } else {
             $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT));
@@ -38,33 +30,27 @@ class ApiController
         }
     }
 
-    // --- 1. Get All Products (Paginated) ---
     public function getProducts(Request $request, Response $response): Response
     {
         $params = $request->getQueryParams();
         $page = max(1, (int) ($params['page'] ?? 1));
-        $limit = min(100, max(1, (int) ($params['limit'] ?? 50)));
+        $limit = min(8, max(1, (int) ($params['limit'] ?? 50)));
         $format = $params['format'] ?? 'json';
 
         $products = $this->productService->getProducts($page, $limit);
         $total = $this->productService->getTotalProducts();
 
         if (empty($products)) {
-            // Handle empty product list
             return $this->outputResponse($response, ['products' => []], $format);
         }
 
-        // --- NEW: Fetch All Related Images in a Single Query ---
         $productIds = array_map(fn($p) => $p->id, $products);
         $allImages = $this->imageService->getImagesForProducts($productIds);
 
-        // Map images back to their respective products
         $imagesByProductId = [];
         foreach ($allImages as $img) {
             $imagesByProductId[$img->product_id][] = $img;
         }
-
-        // --- Final Assembly ---
         foreach ($products as $product) {
             $product->images = $imagesByProductId[$product->id] ?? [];
         }
@@ -90,7 +76,6 @@ class ApiController
         $fieldsParam = $params['fields'] ?? '';
         $format = $params['format'] ?? 'json';
 
-        // Fields Selection Logic
         $selectFields = '*';
         if (!empty($fieldsParam)) {
             $requestedFields = array_map('trim', explode(',', $fieldsParam));
@@ -107,17 +92,14 @@ class ApiController
         $products = $this->productService->searchProducts($query, $selectFields);
 
         if (!empty($products)) {
-            // --- NEW: Fetch All Related Images in a Single Query ---
             $productIds = array_map(fn($p) => $p->id, $products);
             $allImages = $this->imageService->getImagesForProducts($productIds);
 
-            // Map images back to their respective products
             $imagesByProductId = [];
             foreach ($allImages as $img) {
                 $imagesByProductId[$img->product_id][] = $img;
             }
 
-            // --- Final Assembly ---
             foreach ($products as $product) {
                 $product->images = $imagesByProductId[$product->id] ?? [];
             }
@@ -127,7 +109,6 @@ class ApiController
         return $this->outputResponse($response, $data, $format);
     }
 
-    // --- 3. Get Single Product (ID or Handle) ---
     public function getProductOrHandle(Request $request, Response $response, array $args): Response
     {
         $key = $args['key'];
@@ -141,15 +122,12 @@ class ApiController
             return $response->withHeader('Content-Type', 'application/json');
         }
 
-        // --- NEW: Attach Images, Variants, and Options ---
         $product->images = $this->imageService->getProductImages($product->id);
-        // You would call getProductVariants() and getProductOptions() here too.
 
         $data = ['product' => $product];
         return $this->outputResponse($response, $data, $format);
     }
 
-    // --- 4. Get Collection Products (/collections/{handle}) ---
     public function getCollectionProducts(Request $request, Response $response, array $args): Response
     {
         $collectionHandle = strtolower($args['handle']);
@@ -162,25 +140,20 @@ class ApiController
         $products = $this->productService->getCollectionProducts($collectionHandle, $page, $limit, $fieldsParam);
 
         if (!empty($products)) {
-            // --- NEW: Fetch All Related Images in a Single Query ---
             $productIds = array_map(fn($p) => $p->id, $products);
             $allImages = $this->imageService->getImagesForProducts($productIds);
 
-            // Map images back to their respective products
             $imagesByProductId = [];
             foreach ($allImages as $img) {
                 $imagesByProductId[$img->product_id][] = $img;
             }
 
-            // --- Final Assembly ---
             foreach ($products as $product) {
                 $product->images = $imagesByProductId[$product->id] ?? [];
             }
         }
-
-        // --- Handle Metadata ---
         $data = ['products' => $products];
-        if ($collectionHandle !== 'featured') { // featured is not paginated
+        if ($collectionHandle !== 'featured') {
             $total = $this->productService->getTotalCollectionProducts($collectionHandle);
             $data['meta'] = [
                 'total' => (int) $total,
