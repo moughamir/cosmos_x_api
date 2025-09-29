@@ -15,7 +15,7 @@
         "monolog/monolog": "^3.5",
         "zircote/swagger-php": "^4.7",
         "slim/psr7": "^1.0",
-        "laminas/laminas-diactoros": "^2.8"
+        "laminas/laminas-diactoros": "^3.0"
     },
     "autoload": {
         "psr-4": {

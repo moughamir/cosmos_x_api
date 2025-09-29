@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo_sqlite
 
 # Enable Apache modules and configure compression
-RUN a2enmod deflate headers && \
+RUN a2enmod deflate headers rewrite && \
     echo "<IfModule mod_deflate.c>\n  AddOutputFilterByType DEFLATE application/json application/javascript text/css text/html text/xml\n</IfModule>" > /etc/apache2/conf-available/deflate.conf && \
     a2enconf deflate
 
@@ -32,9 +32,13 @@ RUN --mount=type=cache,target=/root/.composer/cache composer install --no-dev --
 FROM base AS production
 COPY --from=build /var/www/html/vendor /var/www/html/vendor
 COPY . .
+COPY config/php.ini /usr/local/etc/php/php.iniww/html/vendor
+COPY . .
 
 # Set permissions for the application
 RUN chown -R www-data:www-data /var/www/html/config && \
+    chown -R www-data:www-data /var/www/html/var/cache && \
+    chown -R www-data:www-data /var/www/html/public/uploads && \
     chmod -R 775 /var/www/html/config
 
 # Expose port

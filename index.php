@@ -1,8 +1,12 @@
 <?php
 
-require __DIR__ . '/vendor/autoload.php';
+try {
+    require __DIR__ . '/vendor/autoload.php';
+} catch (\Throwable $e) {
+    echo $e->getMessage();
+    echo $e->getTraceAsString();
+    exit;
+}
 
-use App\App;
-
-$app = App::bootstrap();
+$app = App\App::bootstrap();
 $app->run();

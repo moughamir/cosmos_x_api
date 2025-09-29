@@ -50,12 +50,17 @@ class HealthController
      */
     public function healthCheck(Request $request, Response $response): Response
     {
-        $status = $this->healthCheck->check();
-        
-        $response->getBody()->write(json_encode($status, JSON_PRETTY_PRINT));
-        return $response
-            ->withStatus($status['status'] === 'healthy' ? 200 : 503)
-            ->withHeader('Content-Type', 'application/health+json');
+        try {
+            $status = $this->healthCheck->check();
+            
+            $response->getBody()->write(json_encode($status, JSON_PRETTY_PRINT));
+            return $response
+                ->withStatus($status['status'] === 'healthy' ? 200 : 503)
+                ->withHeader('Content-Type', 'application/health+json');
+        } catch (\Throwable $e) {
+            $response->getBody()->write(json_encode(['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()], JSON_PRETTY_PRINT));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
     }
 
     /**

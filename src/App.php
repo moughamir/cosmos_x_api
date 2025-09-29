@@ -2,6 +2,10 @@
 
 namespace App;
 
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 use DI\ContainerBuilder;
 use PDO;
 use Psr\Log\LoggerInterface;
@@ -88,11 +92,11 @@ class App
         $app->addRoutingMiddleware();
         $app->add(new CorsMiddleware($config));
 
+        $app->add(new ErrorHandlerMiddleware($logger, getenv('APP_ENV') === 'development'));
+
         $errorMiddleware = $app->addErrorMiddleware(getenv('APP_ENV') === 'development', true, true, $logger);
         $errorHandler = $errorMiddleware->getDefaultErrorHandler();
         $errorHandler->registerErrorRenderer('application/json', JsonErrorRenderer::class);
-
-        $app->add(new ErrorHandlerMiddleware($logger, getenv('APP_ENV') === 'development'));
 
         $app->group('/products', function (RouteCollectorProxy $group) {
             $group->get('[/]', [ApiController::class, 'getProducts']);
