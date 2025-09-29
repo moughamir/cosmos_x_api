@@ -2,17 +2,25 @@
 
 namespace App;
 
-use Slim\Factory\AppFactory;
-use App\Controllers\ApiController;
-use App\Middleware\ApiKeyMiddleware;
-
-use App\Services\ImageProxy;
-use App\Services\ProductService;
-use App\Services\ImageService;
-use PDO;
-use Slim\Routing\RouteCollectorProxy;
-use DI\Container;
 use DI\ContainerBuilder;
+use PDO;
+use Psr\Log\LoggerInterface;
+use Redis;
+use Slim\Factory\AppFactory;
+use Slim\Routing\RouteCollectorProxy;
+
+use App\Controllers\ApiController;
+use App\Controllers\DocsController;
+use App\Controllers\HealthController;
+use App\Factory\LoggerFactory;
+use App\Middleware\ApiKeyMiddleware;
+use App\Middleware\CorsMiddleware;
+use App\Middleware\ErrorHandlerMiddleware;
+use App\Renderer\JsonErrorRenderer;
+use App\Services\HealthCheckService;
+use App\Services\ImageProxy;
+use App\Services\ImageService;
+use App\Services\ProductService;
 
 class App
 {
@@ -21,7 +29,6 @@ class App
         $config = require __DIR__ . '/../config/app.php';
         $dbConfig = require __DIR__ . '/../config/database.php';
 
-
         $containerBuilder = new ContainerBuilder();
         $containerBuilder->addDefinitions([
             PDO::class => function () use ($dbConfig) {
@@ -29,6 +36,14 @@ class App
                 $pdo = new PDO("sqlite:" . $dbFile);
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 return $pdo;
+            },
+            Redis::class => function () use ($config) {
+                $redis = new Redis();
+                $redis->connect($config['redis']['host'], $config['redis']['port']);
+                if (!empty($config['redis']['password'])) {
+                    $redis->auth($config['redis']['password']);
+                }
+                return $redis;
             },
             ProductService::class => function ($container) {
                 return new ProductService($container->get(PDO::class));
@@ -44,21 +59,41 @@ class App
             },
             ImageProxy::class => function () use ($config) {
                 return new ImageProxy($config);
-            }
+            },
+            HealthCheckService::class => function ($container) use ($config) {
+                return new HealthCheckService(
+                    $container->get(PDO::class),
+                    $container->get(Redis::class),
+                    $container->get(LoggerInterface::class),
+                    $config
+                );
+            },
+            HealthController::class => function ($container) {
+                return new HealthController($container->get(HealthCheckService::class));
+            },
+            DocsController::class => function () {
+                return new DocsController(__DIR__ . '/../config');
+            },
         ]);
 
         $container = $containerBuilder->build();
 
-        // Create app with the container
+        $logger = LoggerFactory::create('app', __DIR__ . '/../logs/app.log');
+        $container->set(LoggerInterface::class, $logger);
+
         AppFactory::setContainer($container);
         $app = AppFactory::create();
         $app->setBasePath('/cosmos');
 
-        // Middleware
         $app->addRoutingMiddleware();
-        $app->addErrorMiddleware(true, true, true);
+        $app->add(new CorsMiddleware($config));
 
-        // Routes
+        $errorMiddleware = $app->addErrorMiddleware(getenv('APP_ENV') === 'development', true, true, $logger);
+        $errorHandler = $errorMiddleware->getDefaultErrorHandler();
+        $errorHandler->registerErrorRenderer('application/json', JsonErrorRenderer::class);
+
+        $app->add(new ErrorHandlerMiddleware($logger, getenv('APP_ENV') === 'development'));
+
         $app->group('/products', function (RouteCollectorProxy $group) {
             $group->get('[/]', [ApiController::class, 'getProducts']);
             $group->get('/search', [ApiController::class, 'searchProducts']);
@@ -70,6 +105,15 @@ class App
         })->add(new ApiKeyMiddleware($config['api_key']));
 
         $app->get('/image-proxy', [ImageProxy::class, 'output']);
+
+        $app->get('/health', [HealthController::class, 'healthCheck']);
+        $app->get('/ping', [HealthController::class, 'ping']);
+        $app->get('/version', [HealthController::class, 'version']);
+
+        $app->group('/docs', function (RouteCollectorProxy $group) {
+            $group->get('', [DocsController::class, 'getSwaggerUi']);
+            $group->get('/json', [DocsController::class, 'getOpenApiJson']);
+        });
 
         return $app;
     }

@@ -1,5 +1,5 @@
 <?php
 
 return [
-    'db_file' => __DIR__ . '/data/sqlite/products.sqlite',
+    'db_file' => getenv('DB_FILE') ?: __DIR__ . '/data/sqlite/products.sqlite',
 ];

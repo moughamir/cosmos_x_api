@@ -1,6 +1,7 @@
 <?php
 namespace App\Controllers;
 
+use OpenApi\Annotations as OA;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 use App\Models\MsgPackResponse;
@@ -9,6 +10,37 @@ use App\Services\ImageService;
 use App\Services\ProductService;
 use PDO;
 
+/**
+ * @OA\OpenApi(
+ *     @OA\Info(
+ *         version="1.0.0",
+ *         title="Cosmos Products API",
+ *         description="API for managing products and collections",
+ *         @OA\Contact(
+ *             email="support @example.com"
+ *         ),
+ *         @OA\License(
+ *             name="MIT",
+ *             url="https://opensource.org/licenses/MIT"
+ *         )
+ *     ),
+ *     @OA\Server(
+ *         url="/cosmos",
+ *         description="API Server"
+ *     ),
+ *     @OA\SecurityScheme(
+ *         securityScheme="api_key",
+ *         type="apiKey",
+ *         in="header",
+ *         name="X-API-Key"
+ *     )
+ * )
+ *
+ * @OA\Tag(
+ *     name="Products",
+ *     description="API Endpoints for Products"
+ * )
+ */
 class ApiController
 {
     private ProductService $productService;
@@ -30,6 +62,36 @@ class ApiController
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/products",
+     *     summary="Get a list of products",
+     *     tags={"Products"},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="limit",
+     *         in="query",
+     *         description="Items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=10)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(ref="#/components/schemas/Product")
+     *         )
+     *     ),
+     *     security={{ "api_key": {} }}
+     * )
+     */
     public function getProducts(Request $request, Response $response): Response
     {
         $params = $request->getQueryParams();
