@@ -5,7 +5,11 @@ namespace App\Controllers;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use OpenApi\Generator;
+use OpenApi\Annotations as OA;
 
+/**
+ * @OA\Tag(name="Docs", description="API documentation endpoints")
+ */
 class DocsController
 {
     private string $docsPath;
@@ -15,6 +19,16 @@ class DocsController
         $this->docsPath = $docsPath;
     }
 
+    /**
+     * @OA\Get(
+     *   path="/docs/json",
+     *   summary="OpenAPI JSON",
+     *   tags={"Docs"},
+     *   @OA\Response(response=200, description="OpenAPI document",
+     *     @OA\MediaType(mediaType="application/json")
+     *   )
+     * )
+     */
     public function getOpenApiJson(Request $request, Response $response): Response
     {
         $openapi = Generator::scan([__DIR__ . '/../']);
@@ -22,6 +36,14 @@ class DocsController
         return $response->withHeader('Content-Type', 'application/json');
     }
 
+    /**
+     * @OA\Get(
+     *   path="/docs",
+     *   summary="Swagger UI",
+     *   tags={"Docs"},
+     *   @OA\Response(response=200, description="Swagger UI HTML")
+     * )
+     */
     public function getSwaggerUi(Request $request, Response $response): Response
     {
         $html = <<<'HTML'

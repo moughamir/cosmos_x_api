@@ -4,6 +4,7 @@ namespace App\Services;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use OpenApi\Annotations as OA;
 
 class ImageProxy
 {
@@ -26,6 +27,17 @@ class ImageProxy
         }
     }
 
+    /**
+     * @OA\Get(
+     *   path="/image-proxy",
+     *   summary="Proxy and cache an external image",
+     *   tags={"Images"},
+     *   @OA\Parameter(name="url", in="query", required=true, description="Source image URL (cdn.shopify.com, shopify.com, cdn.moritotabi.com)", @OA\Schema(type="string")),
+     *   @OA\Response(response=200, description="Image content"),
+     *   @OA\Response(response=400, description="Bad request or invalid domain"),
+     *   @OA\Response(response=404, description="Image not found")
+     * )
+     */
     public function output($url): void
     {
         if (!$url) {

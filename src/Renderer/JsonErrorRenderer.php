@@ -10,7 +10,6 @@ class JsonErrorRenderer implements ErrorRendererInterface
 {
     public function __invoke(Throwable $exception, bool $displayErrorDetails): string
     {
-        file_put_contents('/tmp/error.log', 'displayErrorDetails: ' . ($displayErrorDetails ? 'true' : 'false') . "\n", FILE_APPEND);
         $error = [
             'error' => [
                 'message' => $exception->getMessage(),

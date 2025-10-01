@@ -2,13 +2,11 @@
 
 namespace App\Controllers;
 
+use OpenApi\Annotations as OA;
+
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Services\HealthCheckService;
-
-/**
- * @OA\Info(title="Cosmos Products API", version="1.0")
- */
 
 /**
  * @OA\Tag(
@@ -50,17 +48,12 @@ class HealthController
      */
     public function healthCheck(Request $request, Response $response): Response
     {
-        try {
-            $status = $this->healthCheck->check();
-            
-            $response->getBody()->write(json_encode($status, JSON_PRETTY_PRINT));
-            return $response
-                ->withStatus($status['status'] === 'healthy' ? 200 : 503)
-                ->withHeader('Content-Type', 'application/health+json');
-        } catch (\Throwable $e) {
-            $response->getBody()->write(json_encode(['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()], JSON_PRETTY_PRINT));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
-        }
+        $status = $this->healthCheck->check();
+        
+        $response->getBody()->write(json_encode($status, JSON_PRETTY_PRINT));
+        return $response
+            ->withStatus($status['status'] === 'healthy' ? 200 : 503)
+            ->withHeader('Content-Type', 'application/health+json');
     }
 
     /**

@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y \
     unzip \
     && pecl install redis \
     && docker-php-ext-enable redis \
-    && docker-php-ext-install pdo_sqlite
+    && docker-php-ext-install pdo_sqlite opcache \
+    && docker-php-ext-enable opcache
 
 # Enable Apache modules and configure compression
 RUN a2enmod deflate headers rewrite && \
@@ -32,8 +33,10 @@ RUN --mount=type=cache,target=/root/.composer/cache composer install --no-dev --
 FROM base AS production
 COPY --from=build /var/www/html/vendor /var/www/html/vendor
 COPY . .
-COPY config/php.ini /usr/local/etc/php/php.iniww/html/vendor
-COPY . .
+COPY config/php.prod.ini /usr/local/etc/php/php.ini
+
+COPY apache-config.conf /etc/apache2/sites-available/000-default.conf
+RUN a2dissite 000-default.conf && a2ensite 000-default.conf
 
 # Set permissions for the application
 RUN chown -R www-data:www-data /var/www/html/config && \

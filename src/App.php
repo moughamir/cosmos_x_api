@@ -2,10 +2,6 @@
 
 namespace App;
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 use DI\ContainerBuilder;
 use PDO;
 use Psr\Log\LoggerInterface;
@@ -55,10 +51,14 @@ class App
             ImageService::class => function ($container) {
                 return new ImageService($container->get(PDO::class));
             },
+            \App\Services\SimilarityService::class => function ($container) {
+                return new \App\Services\SimilarityService($container->get(PDO::class));
+            },
             ApiController::class => function ($container) {
                 return new ApiController(
                     $container->get(ProductService::class),
-                    $container->get(ImageService::class)
+                    $container->get(ImageService::class),
+                    $container->get(\App\Services\SimilarityService::class)
                 );
             },
             ImageProxy::class => function () use ($config) {
@@ -87,21 +87,37 @@ class App
 
         AppFactory::setContainer($container);
         $app = AppFactory::create();
-        $app->setBasePath('/cosmos');
+
+        // Determine and set base path: default to '/cosmos' unless running the PHP built-in server
+        $basePath = getenv('BASE_PATH');
+        if ($basePath === false || $basePath === '') {
+            $basePath = PHP_SAPI === 'cli-server' ? '' : '/cosmos';
+        }
+        if (!empty($basePath)) {
+            $app->setBasePath($basePath);
+        }
+
+        // Ensure required directories exist for logs, cache, uploads, and sqlite data
+        foreach ([__DIR__ . '/../logs', __DIR__ . '/../var/cache', __DIR__ . '/../public/uploads', __DIR__ . '/../config/data/sqlite'] as $dir) {
+            if (!is_dir($dir)) {
+                @mkdir($dir, 0775, true);
+            }
+        }
 
         $app->addRoutingMiddleware();
         $app->add(new CorsMiddleware($config));
-
-        $app->add(new ErrorHandlerMiddleware($logger, getenv('APP_ENV') === 'development'));
 
         $errorMiddleware = $app->addErrorMiddleware(getenv('APP_ENV') === 'development', true, true, $logger);
         $errorHandler = $errorMiddleware->getDefaultErrorHandler();
         $errorHandler->registerErrorRenderer('application/json', JsonErrorRenderer::class);
 
+        $app->add(new ErrorHandlerMiddleware($logger, getenv('APP_ENV') === 'development'));
+
         $app->group('/products', function (RouteCollectorProxy $group) {
             $group->get('[/]', [ApiController::class, 'getProducts']);
             $group->get('/search', [ApiController::class, 'searchProducts']);
             $group->get('/{key}', [ApiController::class, 'getProductOrHandle']);
+            $group->get('/{key}/related', [ApiController::class, 'getRelated']);
         })->add(new ApiKeyMiddleware($config['api_key']));
 
         $app->group('/collections', function (RouteCollectorProxy $group) {

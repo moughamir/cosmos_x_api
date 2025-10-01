@@ -4,11 +4,12 @@ services:
       context: .
       target: production
     ports:
-      - "8080:80"
+      - "80:80"
     volumes:
       - ./config/data/sqlite/products.sqlite:/var/www/html/config/data/sqlite/products.sqlite
     environment:
       - APP_ENV=development
+      - BASE_PATH=/cosmos
       - API_KEY=YOUR_API_KEY # Please replace with your actual API key
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -34,6 +35,10 @@ services:
       - "8081:80"
     volumes:
       - .:/var/www/html
+      - ./config/php.ini:/usr/local/etc/php/php.ini:ro
+    environment:
+      - APP_ENV=development
+      - BASE_PATH=/cosmos
     networks:
       - app-network
     depends_on:

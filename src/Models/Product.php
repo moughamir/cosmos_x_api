@@ -6,6 +6,20 @@ use OpenApi\Annotations as OA;
 
 /**
  * @OA\Schema(
+ *     schema="Variant",
+ *     type="object",
+ *     title="Variant",
+ *     description="Product variant",
+ *     @OA\Property(property="id", type="integer"),
+ *     @OA\Property(property="title", type="string"),
+ *     @OA\Property(property="sku", type="string"),
+ *     @OA\Property(property="price", type="number", format="float"),
+ *     @OA\Property(property="compare_at_price", type="number", format="float", nullable=true),
+ *     @OA\Property(property="available", type="boolean"),
+ *     @OA\Property(property="options", type="object", nullable=true)
+ * )
+ *
+ * @OA\Schema(
  *     schema="Product",
  *     type="object",
  *     title="Product",
@@ -15,15 +29,16 @@ use OpenApi\Annotations as OA;
  *     @OA\Property(property="handle", type="string", description="Product handle"),
  *     @OA\Property(property="body_html", type="string", description="Product description"),
  *     @OA\Property(property="price", type="number", format="float", description="Product price"),
- *     @OA\Property(property="compare_at_price", type="number", format="float", description="Product compare at price"),
- *     @OA\Property(property="category", type="string", description="Product category"),
- *     @OA\Property(property="in_stock", type="boolean", description="Is the product in stock"),
- *     @OA\Property(property="rating", type="number", format="float", description="Product rating"),
- *     @OA\Property(property="review_count", type="integer", description="Product review count"),
- *     @OA\Property(property="tags", type="string", description="Product tags"),
- *     @OA\Property(property="vendor", type="string", description="Product vendor"),
- *     @OA\Property(property="bestseller_score", type="number", format="float", description="Product bestseller score"),
- *     @OA\Property(property="images", type="array", @OA\Items(type="object"))
+ *     @OA\Property(property="compare_at_price", type="number", format="float", description="Product compare at price", nullable=true),
+ *     @OA\Property(property="category", type="string", description="Product category", nullable=true),
+ *     @OA\Property(property="in_stock", type="boolean", description="Is the product in stock (always true)"),
+ *     @OA\Property(property="rating", type="number", format="float", description="Product rating", nullable=true),
+ *     @OA\Property(property="review_count", type="integer", description="Product review count", nullable=true),
+ *     @OA\Property(property="tags", type="string", description="Product tags", nullable=true),
+ *     @OA\Property(property="vendor", type="string", description="Product vendor", nullable=true),
+ *     @OA\Property(property="bestseller_score", type="number", format="float", description="Product bestseller score", nullable=true),
+ *     @OA\Property(property="images", type="array", @OA\Items(ref="#/components/schemas/Image")),
+ *     @OA\Property(property="variants", type="array", @OA\Items(ref="#/components/schemas/Variant"))
  * )
  */
 class Product
@@ -60,4 +75,5 @@ class Product
     public ?float $bestseller_score;
     public ?string $raw_json;
     public array $images = [];
+    public array $variants = [];
 }
