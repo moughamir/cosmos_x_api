@@ -4,6 +4,18 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
+// Suppress vendor logger warnings during generation (we only care about the final JSON)
+ini_set('display_errors', '0');
+error_reporting(E_ALL & ~E_WARNING & ~E_USER_WARNING & ~E_DEPRECATED);
+set_error_handler(function ($errno, $errstr, $errfile, $errline) {
+    // Ignore warnings from swagger-php DefaultLogger
+    if (strpos($errfile, 'zircote/swagger-php') !== false) {
+        return true; // handled
+    }
+    // Let other errors proceed with default behavior
+    return false;
+});
+
 use OpenApi\Generator;
 
 $sourceDirs = [__DIR__ . '/../src'];
