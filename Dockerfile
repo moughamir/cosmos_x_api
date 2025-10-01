@@ -35,6 +35,10 @@ COPY --from=build /var/www/html/vendor /var/www/html/vendor
 COPY . .
 COPY config/php.prod.ini /usr/local/etc/php/php.ini
 
+# Runtime startup script to pre-generate OpenAPI and related products, then start Apache
+COPY scripts/app-start.sh /usr/local/bin/app-start.sh
+RUN chmod +x /usr/local/bin/app-start.sh
+
 COPY apache-config.conf /etc/apache2/sites-available/000-default.conf
 RUN a2dissite 000-default.conf && a2ensite 000-default.conf
 
@@ -46,3 +50,6 @@ RUN chown -R www-data:www-data /var/www/html/config && \
 
 # Expose port
 EXPOSE 80
+
+# Start script
+CMD ["/usr/local/bin/app-start.sh"]

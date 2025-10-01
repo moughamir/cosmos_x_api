@@ -4,7 +4,6 @@ namespace App\Controllers;
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use OpenApi\\Generator;
 use OpenApi\Annotations as OA;
 
 /**
@@ -47,7 +46,9 @@ class DocsController
             return false;
         });
         try {
-            $openapi = Generator::scan([dirname(__DIR__)]);
+            $gen = new \OpenApi\Generator();
+            $gen->setAnalyser(new \OpenApi\Analysers\TokenAnalyser());
+            $openapi = $gen->scan([dirname(__DIR__)]);
             if (!is_dir(dirname($outFile))) { @mkdir(dirname($outFile), 0775, true); }
             file_put_contents($outFile, $openapi->toJson(JSON_PRETTY_PRINT));
             $response->getBody()->write((string)file_get_contents($outFile));
