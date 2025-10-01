@@ -16,12 +16,12 @@ set_error_handler(function ($errno, $errstr, $errfile, $errline) {
     return false;
 });
 
-use OpenApi\Generator;
+use OpenApi\\Generator;
 
 $sourceDirs = [__DIR__ . '/../src'];
 
 try {
-    $openapi = Generator::scan($sourceDirs);
+$openapi = Generator::scan($sourceDirs);
     $outFile = __DIR__ . '/../public/openapi.json';
     if (!is_dir(dirname($outFile))) {
         mkdir(dirname($outFile), 0775, true);

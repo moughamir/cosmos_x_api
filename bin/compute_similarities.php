@@ -2,7 +2,6 @@
 <?php
 require __DIR__ . '/../vendor/autoload.php';
 
-use PDO;
 
 $dbFile = getenv('DB_FILE') ?: __DIR__ . '/../config/data/sqlite/products.sqlite';
 $pdo = new PDO('sqlite:' . $dbFile);
@@ -16,6 +15,16 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS product_similarities (
     method TEXT NOT NULL DEFAULT 'fts_mix',
     updated_at TEXT NOT NULL,
     PRIMARY KEY (source_id, target_id)
+)");
+
+$pdo->exec("CREATE TABLE IF NOT EXISTS products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    tags TEXT,
+    category TEXT,
+    vendor TEXT,
+    price REAL,
+    bestseller_score REAL
 )");
 $pdo->exec("CREATE INDEX IF NOT EXISTS idx_product_similarities_source ON product_similarities(source_id)");
 

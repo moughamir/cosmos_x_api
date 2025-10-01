@@ -4,7 +4,7 @@ namespace App\Controllers;
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use OpenApi\Generator;
+use OpenApi\\Generator;
 use OpenApi\Annotations as OA;
 
 /**
@@ -31,9 +31,32 @@ class DocsController
      */
     public function getOpenApiJson(Request $request, Response $response): Response
     {
-        $openapi = Generator::scan([__DIR__ . '/../']);
-        $response->getBody()->write($openapi->toJson());
-        return $response->withHeader('Content-Type', 'application/json');
+        $outFile = __DIR__ . '/../../public/openapi.json';
+        if (is_file($outFile)) {
+            $response->getBody()->write((string)file_get_contents($outFile));
+            return $response->withHeader('Content-Type', 'application/json');
+        }
+
+        // Fallback: generate on the fly with suppressed warnings
+        $prevDisplay = ini_get('display_errors');
+        $prevReporting = error_reporting();
+        ini_set('display_errors', '0');
+        error_reporting(E_ALL & ~E_WARNING & ~E_USER_WARNING & ~E_DEPRECATED);
+        set_error_handler(function ($errno, $errstr, $errfile, $errline) {
+            if (strpos($errfile, 'zircote/swagger-php') !== false) { return true; }
+            return false;
+        });
+        try {
+            $openapi = Generator::scan([dirname(__DIR__)]);
+            if (!is_dir(dirname($outFile))) { @mkdir(dirname($outFile), 0775, true); }
+            file_put_contents($outFile, $openapi->toJson(JSON_PRETTY_PRINT));
+            $response->getBody()->write((string)file_get_contents($outFile));
+            return $response->withHeader('Content-Type', 'application/json');
+        } finally {
+            restore_error_handler();
+            ini_set('display_errors', $prevDisplay);
+            error_reporting($prevReporting);
+        }
     }
 
     /**
