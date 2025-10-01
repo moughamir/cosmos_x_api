@@ -85,13 +85,26 @@ All endpoints require an API key for access. The API key must be provided in the
   {
     "product": {
       "id": 1,
-      "title": "Product 1",
+      "name": "Product 1",
       "handle": "product-1",
+      "price": 49.99,
+      "in_stock": true,
+      "variants": [
+        {
+          "id": 101,
+          "title": "Small / Blue",
+          "sku": "SKU-101",
+          "price": 49.99,
+          "compare_at_price": 59.99,
+          "available": true,
+          "options": {"size": "Small", "color": "Blue"}
+        }
+      ],
       "images": [
         {
           "id": 1,
           "product_id": 1,
-          "src": "https://example.com/image1.jpg"
+          "src": "https://moritotabi.com/cdn/s/files/1/.../image1.jpg"
         }
       ]
     }
@@ -163,6 +176,23 @@ Images
 New/advanced endpoints and params
 - include_variants=1 on list/search/collection endpoints to include product variants parsed from raw_json
 - Related products: GET /cosmos/products/{idOrHandle}/related?limit=8
+  - Example:
+  ```json
+  {
+    "products": [
+      {
+        "id": 2,
+        "name": "Related Product",
+        "handle": "related-product",
+        "price": 52.00,
+        "in_stock": true,
+        "images": [
+          {"id": 201, "product_id": 2, "src": "https://moritotabi.com/cdn/s/files/1/.../image2.jpg"}
+        ]
+      }
+    ]
+  }
+  ```
 
 Related products (deep similarity)
 - Precomputed table product_similarities(source_id, target_id, score, method, updated_at)

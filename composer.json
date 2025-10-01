@@ -32,7 +32,7 @@
         }
     },
     "scripts": {
-        "docs": "vendor/bin/openapi --output public/openapi.json src/",
+"docs": "php bin/generate_openapi.php",
 "docs:serve": "php -S 127.0.0.1:8080 -t public/",
         "test": "phpunit",
         "similarity:rebuild": "php bin/compute_similarities.php"

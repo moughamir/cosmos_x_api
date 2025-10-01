@@ -1,5 +1,7 @@
 <?php
 
+namespace App;
+
 use OpenApi\Annotations as OA;
 
 /**
@@ -15,3 +17,4 @@ use OpenApi\Annotations as OA;
  *   @OA\SecurityScheme(securityScheme="api_key", type="apiKey", in="header", name="X-API-KEY")
  * )
  */
+class OpenApi {}

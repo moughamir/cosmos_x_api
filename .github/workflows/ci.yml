@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_sqlite, redis
+          tools: composer:v2
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Docker Compose config
+        run: docker compose config
+
+      - name: Start app stack (app + redis)
+        run: docker compose up -d app redis
+
+      - name: Wait for health
+        run: |
+          for i in {1..30}; do
+            curl -fsS http://localhost/cosmos/health && exit 0
+            sleep 2
+          done
+          echo "Health check failed" && exit 1
+
+      - name: Generate OpenAPI JSON
+        run: composer docs
+
+      - name: Run tests
+        run: composer test
+
+      - name: Upload OpenAPI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-json
+          path: public/openapi.json
