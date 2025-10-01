@@ -1,1 +1,0 @@
-{"version":2,"defects":{"Tests\\AppTest::test_health_check_returns_healthy_status":8},"times":{"Tests\\AppTest::test_that_true_is_true":0.004,"Tests\\AppTest::test_health_check_returns_healthy_status":0.048}}

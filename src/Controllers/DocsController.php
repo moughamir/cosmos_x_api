@@ -30,33 +30,31 @@ class DocsController
      */
     public function getOpenApiJson(Request $request, Response $response): Response
     {
-        $outFile = __DIR__ . '/../../public/openapi.json';
-        if (is_file($outFile)) {
-            $response->getBody()->write((string)file_get_contents($outFile));
-            return $response->withHeader('Content-Type', 'application/json');
-        }
-
-        // Fallback: generate on the fly with suppressed warnings
-        $prevDisplay = ini_get('display_errors');
-        $prevReporting = error_reporting();
-        ini_set('display_errors', '0');
-        error_reporting(E_ALL & ~E_WARNING & ~E_USER_WARNING & ~E_DEPRECATED);
-        set_error_handler(function ($errno, $errstr, $errfile, $errline) {
-            if (strpos($errfile, 'zircote/swagger-php') !== false) { return true; }
-            return false;
-        });
         try {
-            $gen = new \OpenApi\Generator();
-            $gen->setAnalyser(new \OpenApi\Analysers\TokenAnalyser());
-            $openapi = $gen->scan([dirname(__DIR__)]);
-            if (!is_dir(dirname($outFile))) { @mkdir(dirname($outFile), 0775, true); }
-            file_put_contents($outFile, $openapi->toJson(JSON_PRETTY_PRINT));
-            $response->getBody()->write((string)file_get_contents($outFile));
-            return $response->withHeader('Content-Type', 'application/json');
-        } finally {
-            restore_error_handler();
-            ini_set('display_errors', $prevDisplay);
-            error_reporting($prevReporting);
+            // Generate OpenAPI documentation by scanning the codebase
+            $openapi = \OpenApi\Generator::scan([__DIR__ . '/../']);
+            
+            // Convert to JSON and output
+            $response->getBody()->write($openapi->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withHeader('Access-Control-Allow-Origin', '*');
+        } catch (\Exception $e) {
+            // Log the error
+            error_log('Error generating OpenAPI documentation: ' . $e->getMessage());
+            
+            // Return a 500 error with a JSON response
+            $response->getBody()->write(json_encode([
+                'error' => [
+                    'code' => 500,
+                    'message' => 'Failed to generate API documentation',
+                    'details' => $_ENV['APP_ENV'] === 'development' ? $e->getMessage() : null
+                ]
+            ], JSON_PRETTY_PRINT));
+            
+            return $response
+                ->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
         }
     }
 

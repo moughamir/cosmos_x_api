@@ -47,7 +47,7 @@ class ImageService
 
         $stmtImages = $this->db->prepare($sqlImages);
         foreach (array_values($productIds) as $i => $pid) {
-            $stmtImages->bindValue($i + 1, (int)$pid, PDO::PARAM_INT);
+            $stmtImages->bindValue($i + 1, (int) $pid, PDO::PARAM_INT);
         }
         $stmtImages->execute();
         $images = $stmtImages->fetchAll(PDO::FETCH_CLASS, Image::class);

@@ -1,5 +1,6 @@
 {
     "name": "moritotabi/cosmos-api",
+    "version": "1.0.1a",
     "description": "A RESTful API for Shopify products.",
     "type": "project",
     "require": {
@@ -32,8 +33,8 @@
         }
     },
     "scripts": {
-"docs": "php bin/generate_openapi.php",
-"docs:serve": "php -S 127.0.0.1:8080 -t public/",
+        "docs": "php bin/generate_openapi.php",
+        "docs:serve": "php -S 127.0.0.1:8080 -t public/",
         "test": "phpunit",
         "similarity:rebuild": "php bin/compute_similarities.php"
     }

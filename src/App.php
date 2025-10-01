@@ -21,6 +21,12 @@ use App\Services\HealthCheckService;
 use App\Services\ImageProxy;
 use App\Services\ImageService;
 use App\Services\ProductService;
+use App\Validation\Validator;
+use App\Validation\Rules\Required;
+use App\Validation\Rules\Length;
+use App\Validation\Rules\Numeric;
+use App\Validation\Rules\Email;
+use App\Validation\Rules\In;
 
 class App
 {
@@ -78,6 +84,17 @@ class App
             DocsController::class => function () {
                 return new DocsController(__DIR__ . '/../config');
             },
+            // Validation rules
+            Validator::class => function ($container) {
+                return new Validator();
+            },
+            'validation.rules' => [
+                'required' => function() { return new Required(); },
+                'length' => function($min = null, $max = null) { return new Length($min, $max); },
+                'numeric' => function($min = null, $max = null) { return new Numeric($min, $max); },
+                'email' => function() { return new Email(); },
+                'in' => function(...$values) { return new In($values); },
+            ],
         ]);
 
         $container = $containerBuilder->build();

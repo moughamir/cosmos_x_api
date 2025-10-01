@@ -35,7 +35,7 @@ class ErrorHandlerMiddleware implements MiddlewareInterface
 
             $response = new SlimResponse();
             $statusCode = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
-            
+
             $error = [
                 'error' => [
                     'message' => $this->displayErrorDetails ? $e->getMessage() : 'An error occurred',

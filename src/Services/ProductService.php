@@ -177,9 +177,9 @@ class ProductService
                     'id' => $v['id'] ?? null,
                     'title' => $v['title'] ?? null,
                     'sku' => $v['sku'] ?? null,
-                    'price' => isset($v['price']) ? (float)$v['price'] : null,
-                    'compare_at_price' => isset($v['compare_at_price']) ? (float)$v['compare_at_price'] : null,
-                    'available' => array_key_exists('available', $v) ? (bool)$v['available'] : true,
+                    'price' => isset($v['price']) ? (float) $v['price'] : null,
+                    'compare_at_price' => isset($v['compare_at_price']) ? (float) $v['compare_at_price'] : null,
+                    'available' => array_key_exists('available', $v) ? (bool) $v['available'] : true,
                     'options' => $v['options'] ?? null,
                 ];
             }
@@ -203,8 +203,8 @@ class ProductService
         }
         $vendor = $base['vendor'] ?? null;
         $category = $base['category'] ?? null;
-        $price = (float)($base['price'] ?? 0);
-        $tags = array_values(array_filter(array_map('trim', explode(',', (string)($base['tags'] ?? '')))));
+        $price = (float) ($base['price'] ?? 0);
+        $tags = array_values(array_filter(array_map('trim', explode(',', (string) ($base['tags'] ?? '')))));
         $tags = array_slice($tags, 0, 5);
 
         $relSql = "SELECT p.*,
@@ -220,7 +220,7 @@ class ProductService
         $stmt2 = $this->db->prepare($relSql . " ORDER BY base_score - price_penalty DESC, p.id DESC LIMIT :limit");
         $stmt2->bindValue(':vendor', $vendor);
         $stmt2->bindValue(':category', $category);
-        $stmt2->bindValue(':price', (string)$price);
+        $stmt2->bindValue(':price', (string) $price);
         $stmt2->bindValue(':id', $productId, PDO::PARAM_INT);
         $stmt2->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt2->execute();
@@ -229,7 +229,7 @@ class ProductService
         // Post-process: tag overlap scoring
         if (!empty($tags)) {
             foreach ($candidates as $p) {
-                $pTags = array_values(array_filter(array_map('trim', explode(',', (string)$p->tags))));
+                $pTags = array_values(array_filter(array_map('trim', explode(',', (string) $p->tags))));
                 $overlap = count(array_intersect($tags, $pTags));
                 // approximate improvement to ranking by overlap
                 $p->related_score = ($overlap * 2);

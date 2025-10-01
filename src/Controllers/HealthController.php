@@ -49,7 +49,7 @@ class HealthController
     public function healthCheck(Request $request, Response $response): Response
     {
         $status = $this->healthCheck->check();
-        
+
         $response->getBody()->write(json_encode($status, JSON_PRETTY_PRINT));
         return $response
             ->withStatus($status['status'] === 'healthy' ? 200 : 503)

@@ -9,8 +9,24 @@
 
 # Configuration
 /config/data/sqlite/products.sqlite
-#backup
-/backup
-# Environment
+/backup/
+
+# Environment variables
 .env
-composer.json
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+var/cache/
+public/uploads/
+*.log
