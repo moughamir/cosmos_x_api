@@ -24,12 +24,11 @@
     - Create integration tests for the API endpoints.
 
 - ### wip
-  - [ ] **Testing: Write Unit Tests for Services** (Priority: Medium) (Due: TBD)
-    - *Depends on: Bug fixes in services.*
-    - Create unit tests for `ProductService`, `ImageService`, `SimilarityService`, and `HealthCheckService`.
 
 - ### done
-  - [x] **Testing: Write Unit Tests for Controllers** (Priority: Medium)
+  - [x] **Testing: Write Unit Tests for Services** (Priority: Medium)
+    - *Depends on: Bug fixes in services.*
+    - Create unit tests for `ProductService`, `ImageService`, `SimilarityService`, and `HealthCheckService`.  - [x] **Testing: Write Unit Tests for Controllers** (Priority: Medium)
     - *Depends on: Bug fixes in controllers.*
     - Create unit tests for `ApiController`, `DocsController`, and `HealthController`.
 - ### done
