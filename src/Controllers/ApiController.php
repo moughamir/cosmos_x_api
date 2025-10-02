@@ -10,6 +10,7 @@ use App\Services\ImageService;
 use App\Services\ProductService;
 use App\Traits\ValidatesRequests;
 use PDO;
+use Psr\Container\ContainerInterface;
 
 /**
  * @OA\Tag(name="Products", description="Operations about products")
@@ -55,12 +56,14 @@ class ApiController
     private ProductService $productService;
     private ImageService $imageService;
     private \App\Services\SimilarityService $similarityService;
+    private ContainerInterface $container;
 
-    public function __construct(ProductService $productService, ImageService $imageService, \App\Services\SimilarityService $similarityService)
+    public function __construct(ProductService $productService, ImageService $imageService, \App\Services\SimilarityService $similarityService, ContainerInterface $container)
     {
         $this->productService = $productService;
         $this->imageService = $imageService;
         $this->similarityService = $similarityService;
+        $this->container = $container;
     }
 
     private function validateCollectionHandle(string $handle): bool
@@ -185,17 +188,7 @@ class ApiController
      *             default="desc"
      *         )
      *     ),
-     *     @OA\Parameter(
-     *         name="format",
-     *         in="query",
-     *         description="Response format",
-     *         required=false,
-     *         @OA\Schema(
-     *             type="string",
-     *             enum={"json", "msgpack"},
-     *             default="json"
-     *         )
-     *     ),
+
      *     @OA\Response(
      *         response=200,
      *         description="Successful operation",
@@ -252,7 +245,7 @@ class ApiController
         $total = $this->productService->getTotalProducts();
 
         // mark in_stock true and optionally attach variants
-        $includeVariants = (isset($params['include_variants']) && (int) $params['include_variants'] === 1);
+        $includeVariants = (isset($queryParams['include_variants']) && (int) $queryParams['include_variants'] === 1);
         foreach ($products as $p) {
             $p->in_stock = true;
             if ($includeVariants) {

@@ -20,7 +20,7 @@ class ImageProxy
 
     public function __construct(array $config)
     {
-        $this->cacheDir = $config['image_cache_dir'];
+        $this->cacheDir = $config['image_proxy']['cache_dir'];
         $this->httpClient = new Client();
         if (!is_dir($this->cacheDir)) {
             mkdir($this->cacheDir, 0755, true);
@@ -38,8 +38,9 @@ class ImageProxy
      *   @OA\Response(response=404, description="Image not found")
      * )
      */
-    public function output($url): void
+    public function output(\Psr\Http\Message\ServerRequestInterface $request): void
     {
+        $url = $request->getQueryParams()['url'] ?? null;
         if (!$url) {
             http_response_code(400);
             echo "Missing url";
@@ -75,7 +76,6 @@ class ImageProxy
     {
         try {
             $response = $this->httpClient->get($url, [
-                'verify' => false,
                 'sink' => $cacheFile,
                 'timeout' => 10,
                 'on_headers' => function (\GuzzleHttp\Psr7\Response $response) {

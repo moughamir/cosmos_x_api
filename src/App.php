@@ -64,7 +64,8 @@ class App
                 return new ApiController(
                     $container->get(ProductService::class),
                     $container->get(ImageService::class),
-                    $container->get(\App\Services\SimilarityService::class)
+                    $container->get(\App\Services\SimilarityService::class),
+                    $container
                 );
             },
             ImageProxy::class => function () use ($config) {
@@ -141,7 +142,10 @@ class App
             $group->get('/{handle}', [ApiController::class, 'getCollectionProducts']);
         })->add(new ApiKeyMiddleware($config['api_key']));
 
-        $app->get('/image-proxy', [ImageProxy::class, 'output']);
+        $app->get('/image-proxy', function ($request, $response, $args) use ($container) {
+            $container->get(ImageProxy::class)->output($request);
+            return $response;
+        });
 
         $app->get('/health', [HealthController::class, 'healthCheck']);
         $app->get('/ping', [HealthController::class, 'ping']);

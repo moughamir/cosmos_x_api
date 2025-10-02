@@ -71,4 +71,21 @@ class SimilarityService
         
         return ($result && $result['cat1'] === $result['cat2']) ? 1.0 : 0.0;
     }
+
+    public function getPrecomputedRelated(int $productId, int $limit): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT p.* FROM products p
+            JOIN product_similarities s ON p.id = s.target_id
+            WHERE s.source_id = :product_id
+            ORDER BY s.score DESC
+            LIMIT :limit
+        ");
+
+        $stmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_CLASS, \App\Models\Product::class);
+    }
 }
