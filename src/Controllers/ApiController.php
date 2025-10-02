@@ -223,9 +223,10 @@ class ApiController
         // Set default values if not provided
         $page = max(1, (int)($queryParams['page'] ?? 1));
         $limit = min(50, max(1, (int)($queryParams['limit'] ?? 20)));
-        $sort = in_array($queryParams['sort'] ?? 'created_at', ['created_at', 'updated_at', 'name', 'price']) 
-            ? $queryParams['sort'] 
-            : 'created_at';
+        $sort = $queryParams['sort'] ?? 'created_at';
+        if (!in_array($sort, ['created_at', 'updated_at', 'name', 'price'])) {
+            $sort = 'created_at';
+        }
         $order = strtoupper($queryParams['order'] ?? 'desc') === 'ASC' ? 'ASC' : 'DESC';
         $format = strtolower($queryParams['format'] ?? 'json');
         
@@ -254,7 +255,16 @@ class ApiController
         }
 
         if (empty($products)) {
-            return $this->outputResponse($response, ['products' => []], $format);
+            $data = [
+                'products' => [],
+                'meta' => [
+                    'total' => $total,
+                    'page' => $page,
+                    'limit' => $limit,
+                    'total_pages' => ceil($total / $limit)
+                ]
+            ];
+            return $this->outputResponse($response, $data, $format);
         }
 
         $productIds = array_map(fn($p) => $p->id, $products);

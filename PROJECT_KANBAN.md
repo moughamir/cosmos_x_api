@@ -17,12 +17,6 @@
     - [ ] Write a development setup guide.
 
 - ### todo
-  - [ ] **Testing: Write Unit Tests for Controllers** (Priority: Medium) (Due: TBD)
-    - *Depends on: Bug fixes in controllers.*
-    - Create unit tests for `ApiController`, `DocsController`, and `HealthController`.
-  - [ ] **Testing: Write Unit Tests for Services** (Priority: Medium) (Due: TBD)
-    - *Depends on: Bug fixes in services.*
-    - Create unit tests for `ProductService`, `ImageService`, `SimilarityService`, and `HealthCheckService`.
   - [ ] **Testing: Write Validation Tests** (Priority: Medium) (Due: TBD)
     - Create unit tests for the validation rules.
   - [ ] **Testing: Write Integration Tests** (Priority: Medium) (Due: TBD)
@@ -30,7 +24,14 @@
     - Create integration tests for the API endpoints.
 
 - ### wip
+  - [ ] **Testing: Write Unit Tests for Services** (Priority: Medium) (Due: TBD)
+    - *Depends on: Bug fixes in services.*
+    - Create unit tests for `ProductService`, `ImageService`, `SimilarityService`, and `HealthCheckService`.
 
+- ### done
+  - [x] **Testing: Write Unit Tests for Controllers** (Priority: Medium)
+    - *Depends on: Bug fixes in controllers.*
+    - Create unit tests for `ApiController`, `DocsController`, and `HealthController`.
 - ### done
   - [x] **Feature: Input Validation** (Priority: High)
     - [x] Fix `msgpack_pack` function handling.
